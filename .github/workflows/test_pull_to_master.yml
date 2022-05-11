@@ -1,0 +1,95 @@
+#
+# file:		test_pull_to_master.yml
+#
+
+name: test_pull_to_master
+on:
+    pull_request:
+        branches: [ master ]
+
+jobs:
+
+    # matrix for debian linuxes (for now ubuntu-18.04 and ubuntu-20.04)
+    debian-linuxes:
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            # os: [ubuntu-18.04, ubuntu-20.04]
+            # for time being lets make test only on one ubuntu
+            os: [ubuntu-18.04]
+        steps:
+            - uses: actions/checkout@v2
+
+            # see: https://github.com/de-vri-es/setup-git-credentials and 
+            # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+            #- uses: fusion-engineering/setup-git-credentials@v2
+            - uses: de-vri-es/setup-git-credentials@v2
+              with:
+                # token: '${{ secrets.GITHUB_TOKEN }}' # this secret generated automatically
+                credentials: ${{ secrets.GIT_CREDENTIALS }}
+           
+            - name: Preparing 3rd party libraries for ${{ matrix.os }}
+              run: ./scripts/.cicd/unix_prebuild.sh
+
+            - name: Compiling for ${{ matrix.os }}
+              run: ./scripts/.cicd/unix_test_pull_to_master_build.sh CPPUTILS_DEBUG=1
+              #run: ./scripts/.cicd/unix_test_pull_to_master_build.sh
+              #run: echo "Will be implemented"
+              #working-directory: blabla
+
+            - name: running unittest for ${{ matrix.os }}
+              run: ./scripts/.cicd/unix_test_pull_to_master_unittest.sh Debug
+              #run: echo "Will be implemented"
+
+        # # see https://github.com/jurplel/install-qt-action
+        #- name: Install Qt
+        #  uses: jurplel/install-qt-action@v2
+        #  with:
+        #    version: '5.15.2'
+        #    host: 'linux'
+        #    target: 'desktop'
+        #    #arch: 'win64_msvc2017_64' # This is only used for Windows and Android.
+        #    dir: '${{ runner.workspace }}'  # this is default value, but who knows, better to define
+        #    install-deps: 'true'
+        #    modules: 'qtcharts svg'
+        #
+        #- name: Compile GUI for ${{ matrix.os }}
+        #  run: ./scripts/.cicd/unix_test_pull_to_master_qt_compile.sh
+            
+    # This is for windows
+    #windows:
+    #    runs-on: windows-latest
+    #    steps:
+    #        - uses: actions/checkout@v2
+    #
+    #        - name: Setup MSBuild.exe
+    #          uses: microsoft/setup-msbuild@v1.0.2
+    #
+    #        - name: Setup developer command prompt
+    #          uses: ilammy/msvc-dev-cmd@v1
+    #
+    #        - name: Preparing 3rd party libraries for windows
+    #          run: echo "will be implemented"
+    #
+    #        - name: Compiling for windows
+    #          run: .\scripts\.cicd\windows_test_pull_to_master_build.bat
+    #          #working-directory: blabla
+    #
+    #        - name: running unittest for windows
+    #          run: echo "will be implemented"
+
+    # do we need mac ?
+    #mac:
+    #    runs-on: macos-latest
+    #    steps:
+    #        - uses: actions/checkout@v2
+    #
+    #        - name: Preparing 3rd party libraries for mac
+    #          run: echo "will be implemented"
+    #
+    #        - name: Compiling for mac
+    #          run: echo "will be implemented"
+    #          #working-directory: blabla
+    #
+    #        - name: running unittest for mac
+    #          run: echo "will be implemented"

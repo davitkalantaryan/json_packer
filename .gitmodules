@@ -1,0 +1,9 @@
+[submodule "contrib/TLV"]
+	path = contrib/TLV
+	url = https://github.com/davitkalantaryan/TLV.git
+[submodule "contrib/googletest"]
+	path = contrib/googletest
+	url = https://github.com/davitkalantaryan/googletest.git
+[submodule "contrib/emsdk"]
+	path = contrib/emsdk
+	url = https://github.com/davitkalantaryan/emsdk.git

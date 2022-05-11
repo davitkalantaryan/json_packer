@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <artifactRoot>$(ProjectDir)..\..\..\sys</artifactRoot>
+    <SYSTEM_PATH>win_$(PlatformTarget)\$(Configuration)</SYSTEM_PATH>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(artifactRoot)\$(SYSTEM_PATH)\.other\objects\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>DMSG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\contrib\zeromq\contrib\libzmq\include;$(ProjectDir)..\..\..\include;$(ProjectDir)../../../src/serverlib/include;$(ProjectDir)..\..\..\src\win_additional_sources;$(ProjectDir)../../../src/clientlib/include;$(ProjectDir)..\..\..\contrib\doocs\gul\include;$(ProjectDir)..\..\..\contrib\xdr_rpc\include;$(ProjectDir)..\..\..\contrib\user_group_id\include;$(ProjectDir)..\..\..\contrib\wlac2\include</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="artifactRoot">
+      <Value>$(artifactRoot)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="SYSTEM_PATH">
+      <Value>$(SYSTEM_PATH)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
