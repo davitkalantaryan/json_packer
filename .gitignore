@@ -84,3 +84,5 @@
 prj/tests/googletest_mult/Makefile.googletest_getter
 
 /.private
+
+test_json_out*.txt

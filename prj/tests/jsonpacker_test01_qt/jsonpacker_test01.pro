@@ -15,6 +15,7 @@ DESTDIR = "$${artifactRoot}/$${SYSTEM_PATH}/test"
 tlvSources = $${repositoryRoot}/contrib/TLV/cpp
 
 INCLUDEPATH += "$${tlvSources}"
+INCLUDEPATH += "$${repositoryRoot}/include"
 
 QT -= gui
 #QT -= core
@@ -27,8 +28,14 @@ win32{
 	LIBS += -pthread
 }
 
-SOURCES += "$${repositoryRoot}/src/tests/main_tlv_test01.cpp"
+SOURCES += "$${repositoryRoot}/src/tests/main_jsonpacker_test01.cpp"
+SOURCES += $$files($${repositoryRoot}/src/core/*.cpp,true)
 SOURCES += "$${tlvSources}/tlv.cpp"
 SOURCES += "$${tlvSources}/tlv_box.cpp"
 
 HEADERS += $$files($${tlvSources}/*.h,true)
+HEADERS += $$files($${repositoryRoot}/include/*.h,true)
+HEADERS += $$files($${repositoryRoot}/include/*.hpp,true)
+
+OTHER_FILES +=	\
+	"$${PWD}/../jsonpacker_test01_mkfl/Makefile"

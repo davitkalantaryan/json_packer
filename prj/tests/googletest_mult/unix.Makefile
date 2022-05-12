@@ -14,7 +14,7 @@ GTEST_SRC_DIR=$(repoRootPath)/src/tests/googletest
 COMMON_SRC_DIR=$(repoRootPath)/src/core
 
 GTEST_SRCS	= $(shell find $(GTEST_SRC_DIR) -name "*.cpp")
-COMMON_SRCS	= $(shell find $(COMMON_SRC_DIR) -name "*.cpp")
+#COMMON_SRCS	= $(shell find $(COMMON_SRC_DIR) -name "*.cpp")
 
 CPPFLAGS += -I$(repoRootPath)/contrib/googletest/googletest/include
 # c=+ 11 is needed for google test
