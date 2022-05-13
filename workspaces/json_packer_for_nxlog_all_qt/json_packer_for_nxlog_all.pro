@@ -31,4 +31,5 @@ OTHER_FILES	+=	\
         $${repositoryRoot}/.gitattributes			\
 	$${repositoryRoot}/.gitignore				\
 	$${repositoryRoot}/LICENSE				\
+	$${repositoryRoot}/Makefile				\
 	$${repositoryRoot}/README.md
