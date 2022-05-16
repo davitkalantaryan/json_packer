@@ -8,7 +8,7 @@ Sources to pack JSON data to binary stream.
   
 ``` bash  
 git clone ${urlToThisRepo}
-cd json_packer_for_nxlog
+cd json_packer
 git submodule update --init --recursive
 ```  
   
