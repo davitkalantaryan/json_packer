@@ -18,11 +18,14 @@
 #include "tlv_box.h"
 
 #define JSON_PACKER_MAX_SIZE    4096  // one page
+#define JSON_PACKER_OUT_BOX_TYPE    1
 
 namespace jsonpacker{ namespace packer{
 
-typedef std::pair<int,QJsonValue::Type> TypeDictSecond;
-typedef ::std::map<QString,TypeDictSecond> MapType;
+typedef std::pair<int,QJsonValue::Type> TypeDictSecond; // this is done compilacated for future use (if we check type consistency per key)
+typedef ::std::map<QString,TypeDictSecond> MapType;    // this is done compilacated for future use (if we check type consistency per key)
+// if type consistency per key is not important, then instead upper 2 maps, we can have below simple map
+// typedef ::std::map<QString,int> MapType; //
 
 template <typename stringT>
 JSONPACKER_DLL_PRIVATE stringT StringToUString(const char* a_strIn, size_t a_strLen);
@@ -118,22 +121,28 @@ JSONPACKER_EXPORT bool Pack(::std::basic_istream<CharIn>& a_inp, ::std::basic_os
         }
 
         // let's put dictonary itself
-        tlv::TlvBox aTlvBox;
+        tlv::TlvBox aTlvBoxInner, aTlvBoxOut;
         MapType::const_iterator iter = aMap.begin();
         const MapType::const_iterator iterEnd = aMap.end();
 
         for(;iter!=iterEnd;++iter){
-            aTlvBox.PutStringValue(iter->second.first,iter->first.toStdString());
+            aTlvBoxInner.PutStringValue(iter->second.first,iter->first.toStdString());
         }
 
-        if (!aTlvBox.Serialize()) {
+        if (!aTlvBoxInner.Serialize()) { // I'm not sure if this is needed to put this to bigger box (no time to check, and performance is not imp.)
             return false;
         }
 
-        const size_t outBufferSize (size_t(aTlvBox.GetSerializedBytes()));
+        aTlvBoxOut.PutObjectValue(JSON_PACKER_OUT_BOX_TYPE, aTlvBoxInner);
+
+        if (!aTlvBoxOut.Serialize()) {
+            return false;
+        }
+
+        const size_t outBufferSize (size_t(aTlvBoxOut.GetSerializedBytes()));
         if(outBufferSize<1){return false;}
 
-        const char* pcOutput = reinterpret_cast<char*>(aTlvBox.GetSerializedBuffer());
+        const char* pcOutput = reinterpret_cast<char*>(aTlvBoxOut.GetSerializedBuffer());
         if(!pcOutput){
             return false;
         }
