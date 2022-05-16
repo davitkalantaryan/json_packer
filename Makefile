@@ -15,3 +15,6 @@ default: packer
 
 packer:
 	make -C $(repositoryRoot)/prj/tests/jsonpacker_test01_mkfl
+	
+clean:
+	make -C $(repositoryRoot)/prj/tests/jsonpacker_test01_mkfl clean QT_ROOT_DIR=1
