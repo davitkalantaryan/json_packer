@@ -10,6 +10,7 @@
 #include <map>
 #include <fstream>
 #include <cstdlib>
+#include <stdint.h>
 #include <jsonpacker/disable_utils_warnings.h>
 #include <QJsonDocument>
 #include <QByteArray>
@@ -81,60 +82,68 @@ JSONPACKER_EXPORT bool Pack(const char* a_inpFileName, ::std::basic_ostream<Char
 template <typename CharIn, typename CharOut>
 JSONPACKER_EXPORT bool Pack(::std::basic_istream<CharIn>& a_inp, ::std::basic_ostream<CharOut>& a_out)
 {
-    MapType aMap;
-    ::std::basic_string<CharIn> inString(JSON_PACKER_MAX_SIZE,0);
-    CharIn* pcBuffer = const_cast<CharIn*>(inString.data());
-    int nLinesParsed(0);
+    try{
+        MapType aMap;
+        ::std::basic_string<CharIn> inString(JSON_PACKER_MAX_SIZE,0);
+        CharIn* pcBuffer = const_cast<CharIn*>(inString.data());
+        int nLinesParsed(0);
 
-    while(!a_inp.eof()){
+        const typename std::basic_ostream<CharOut>::pos_type initPos =  a_out.tellp();
 
-        a_inp.getline(pcBuffer,JSON_PACKER_MAX_SIZE);
-        if(a_inp.fail()){
-            // we have line with more than 4095 characters
-            if(a_inp.gcount()>(JSON_PACKER_MAX_SIZE-2)){
-                // todo: report that we have larger than 4096 byte line
-                return false;
+        while(!a_inp.eof()){
+
+            a_inp.getline(pcBuffer,JSON_PACKER_MAX_SIZE);
+            if(a_inp.fail()){
+                // we have line with more than 4095 characters
+                if(a_inp.gcount()>(JSON_PACKER_MAX_SIZE-2)){
+                    // todo: report that we have larger than 4096 byte line
+                    return false;
+                }
+                break;
             }
-            break;
-        }
-        const size_t cunCount = a_inp.gcount();
-        const ::std::string inpStr = UStringToString(pcBuffer,cunCount);
-        if(SingleDataToFile(inpStr,a_out,&aMap)){
-            ++nLinesParsed;
-        }
-        else{
-            //return false;
-            // just report that this line is not json
+            const size_t cunCount = a_inp.gcount();
+            const ::std::string inpStr = UStringToString(pcBuffer,cunCount);
+            if(SingleDataToFile(inpStr,a_out,&aMap)){
+                ++nLinesParsed;
+            }
+            else{
+                //return false;
+                // just report that this line is not json
+            }
+
+        } // while(!a_inp.eof()){
+
+        if(nLinesParsed==0){
+            return false; // no any JSON line found
         }
 
-    } // while(!a_inp.eof()){
+        // let's put dictonary itself
+        tlv::TlvBox aTlvBox;
+        MapType::const_iterator iter = aMap.begin();
+        const MapType::const_iterator iterEnd = aMap.end();
 
-    if(nLinesParsed==0){
-        return false; // no any JSON line found
+        for(;iter!=iterEnd;++iter){
+            aTlvBox.PutStringValue(iter->second.first,iter->first.toStdString());
+        }
+
+        if (!aTlvBox.Serialize()) {
+            return false;
+        }
+
+        const size_t outBufferSize (size_t(aTlvBox.GetSerializedBytes()));
+        if(outBufferSize<1){return false;}
+
+        const char* pcOutput = reinterpret_cast<char*>(aTlvBox.GetSerializedBuffer());
+        if(!pcOutput){
+            return false;
+        }
+        a_out.seekp(initPos); // this can throw std::ios_base::failure
+        ::std::basic_string<CharOut> outStr = StringToUString<std::basic_string<CharOut> >(pcOutput,outBufferSize);
+        a_out.write(outStr.c_str(),outStr.size());
     }
-
-    // let's put dictonary itself
-    tlv::TlvBox aTlvBox;
-    MapType::const_iterator iter = aMap.begin();
-    const MapType::const_iterator iterEnd = aMap.end();
-
-    for(;iter!=iterEnd;++iter){
-        aTlvBox.PutStringValue(iter->second.first,iter->first.toStdString());
-    }
-
-    if (!aTlvBox.Serialize()) {
+    catch(...){  // generally speaking we will have  std::ios_base::failure, so we can write `catch(const  std::ios_base::failure&)`
         return false;
     }
-
-    const size_t outBufferSize (size_t(aTlvBox.GetSerializedBytes()));
-    if(outBufferSize<1){return false;}
-
-    const char* pcOutput = reinterpret_cast<char*>(aTlvBox.GetSerializedBuffer());
-    if(!pcOutput){
-        return false;
-    }
-    ::std::basic_string<CharOut> outStr = StringToUString<std::basic_string<CharOut> >(pcOutput,outBufferSize);
-    a_out.write(outStr.c_str(),outStr.size());
 
     return a_out.fail()?false:true;
 }
@@ -196,18 +205,26 @@ static bool SingleDataToFile(const ::std::string& a_inpStr, ::std::basic_ostream
             //if(iterDict->second.second!=jsonValueType){return false;} // or?
         }
 
+        // we will make following for the key:
+        // key is int => 32 bit, we will split it to 2 16 bit parts,
+        // one part will show data type (Null,Bool,Double,String)
+        // second part will be responsible for key name (equal to nKeyIntValue)
+        const uint16_t typePart = uint16_t(jsonValueType);
+        const uint16_t keyNamePart = uint16_t(nKeyIntValue);
+        const int cnCombinedKey((int(typePart)<<16)|int(keyNamePart));
+
         switch(jsonValueType){
         case QJsonValue::Null:
-            aTlvBox.PutNoValue(nKeyIntValue);
+            aTlvBox.PutNoValue(cnCombinedKey);
             break;
         case QJsonValue::Bool:
-            aTlvBox.PutBoolValue(nKeyIntValue,jsonValue.toBool());
+            aTlvBox.PutBoolValue(cnCombinedKey,jsonValue.toBool());
             break;
         case QJsonValue::Double:
-            aTlvBox.PutDoubleValue(nKeyIntValue,jsonValue.toDouble());
+            aTlvBox.PutDoubleValue(cnCombinedKey,jsonValue.toDouble());
             break;
         case QJsonValue::String:
-            aTlvBox.PutStringValue(nKeyIntValue,jsonValue.toString().toStdString());
+            aTlvBox.PutStringValue(cnCombinedKey,jsonValue.toString().toStdString());
             break;
         default:
             return false;
