@@ -1,4 +1,4 @@
-# json_packer_for_nxlog
+# JSON packer
   
 Sources to pack JSON data to binary stream.  
   
