@@ -75,7 +75,7 @@ JSONPACKER_EXPORT bool Pack(::std::basic_istream<CharIn>& a_inp, const char* a_o
 template <typename CharOut>
 JSONPACKER_EXPORT bool Pack(const char* a_inpFileName, ::std::basic_ostream<CharOut>& a_out)
 {
-    ::std::fstream  fileIn, fileOut;
+    ::std::fstream  fileIn;
     fileIn.open(a_inpFileName,std::ios_base::in|std::ios_base::binary);
     if(!fileIn.is_open()){return false;}
     return Pack(fileIn,a_out);
